@@ -33,6 +33,10 @@
     font-weight: bold;
   }
 
+  td:hover {
+    cursor: pointer;
+  }
+
 </style>
 <script type="text/javascript" src="./node_modules/jquery/dist/jquery.min.js"></script>
 <script>
@@ -94,7 +98,10 @@
         // for the initial 'unclicked' state.  the cell data should be stored/available so that
         // subsequent clicks can reveal the appropriate info.
         // there are different ways to accomplish this.
-        let cell = document.createTextNode(rowCell.question);
+        let cell = document.createTextNode(rowCell.question); // display points value
+        cell.addEventListener('click', () => {
+          // code here
+        });
         col.appendChild(cell);
         row.appendChild(col);
       }
