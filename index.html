@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Jeopardy API Test</title>
+    <script src="./node_modules/axios/dist/axios.min.js"></script>
+    <script src="./node_modules/lodash/lodash.min.js"></script>
+</head>
+<body>
+    <h1>Jeopardy</h1>
+
+    <table id="tblJeopardy">
+
+    </table>
+</body>
+
+<style>
+  table {
+    table-layout: fixed;
+    width: 50%;
+    border-collapse: collapse;
+    border: 3px solid purple;
+  }
+
+  th,
+  td {
+    padding: 20px;
+    text-align: center;
+    border: 1px solid black;
+  }
+
+  th {
+    font-weight: bold;
+  }
+
+</style>
+<script type="text/javascript" src="./node_modules/jquery/dist/jquery.min.js"></script>
+<script>
+  let currentCategories = [];
+  $(document).ready(async () => {
+    await fetchCategories().then((res) => {
+      for (const cat of res) {
+        let clues = cat['clues'];
+        for (const clue of clues) {
+          // attach a 'currentState' property to clue/cell
+          clue.currentState = 'UNCLICKED';
+        }
+        currentCategories.push(cat);
+      }
+      initBoard(currentCategories);
+    });
+  });
+
+  const initBoard = (boardData) => {
+    let table = document.getElementById('tblJeopardy');
+
+    // build header
+    let thead = document.createElement('thead');
+    table.appendChild(thead);
+    for (const cat of boardData) {
+      let categoryName = cat['title'];
+      thead.appendChild(document.createElement('th'))
+        .appendChild(document.createTextNode(categoryName));
+    }
+
+    // build table body
+    let tbody = document.createElement('tbody');
+    table.appendChild(tbody);
+    let rowData = [];
+    for (let i = 0; i < boardData.length; i++)
+    {
+      let cat = boardData[i];
+      let clues = cat['clues'];
+      // flatten the clues data.  this is necessary because we are using a grid structure to build the board
+      // the rows are divided up by the index of the clue(s).  For example, all clues with index 0 are the 1st row
+      // clues with index 1 are then 2nd row, etc.
+      for (let j = 0; j < clues.length; j++)
+      {
+        let clue = clues[j];
+        clue.rowIndex = j;
+        rowData.push(clue);
+      }
+    }
+
+    for (let k = 0; k < 5; k++)
+    {
+      // find all clues with rowIndex = k (currentIndex).  Build table row
+      let currentRowData = _.filter(rowData, { rowIndex: k});
+      var row = document.createElement('tr');
+      for (const rowCell of currentRowData) {
+        let col = document.createElement('td');
+        // here we are initializing the cell with the question, but we should display a question mark
+        // for the initial 'unclicked' state.  the cell data should be stored/available so that
+        // subsequent clicks can reveal the appropriate info.
+        // there are different ways to accomplish this.
+        let cell = document.createTextNode(rowCell.question);
+        col.appendChild(cell);
+        row.appendChild(col);
+      }
+      tbody.appendChild(row);
+    }
+  }
+
+  const fetchCategories = async () => {
+    let categories = [];
+    try {
+      const response = await axios.get("https://rithm-jeopardy.herokuapp.com/api/categories?count=100");
+      let categoryIds = _.sampleSize(response.data, 6); // sampleSize is a lodash function for picking random/unique elements from a collection
+      for (const cat of categoryIds) {
+        await getCategory(cat.id).then((res) => {
+          categories.push(res);
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    return categories;
+  }
+
+  const getCategory = async (id) => {
+    const response = await axios.get(`https://rithm-jeopardy.herokuapp.com/api/category?id=${id}`);
+    return response.data;
+  }
+</script>
+</html>
