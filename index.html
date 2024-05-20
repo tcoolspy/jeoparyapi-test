@@ -37,6 +37,7 @@
 <script type="text/javascript" src="./node_modules/jquery/dist/jquery.min.js"></script>
 <script>
   let currentCategories = [];
+  // $(document).ready...is a jQuery pattern used to ensure the page is 'ready' before executing the javascript
   $(document).ready(async () => {
     await fetchCategories().then((res) => {
       for (const cat of res) {
