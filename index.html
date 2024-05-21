@@ -41,6 +41,7 @@
 <script type="text/javascript" src="./node_modules/jquery/dist/jquery.min.js"></script>
 <script>
   let currentCategories = [];
+  let cellData = [];
   // $(document).ready...is a jQuery pattern used to ensure the page is 'ready' before executing the javascript
   $(document).ready(async () => {
     await fetchCategories().then((res) => {
@@ -52,11 +53,34 @@
         }
         currentCategories.push(cat);
       }
-      initBoard(currentCategories);
     });
+    cellData = await initBoard(currentCategories);
+    console.log('cellData: ', cellData);
   });
 
-  const initBoard = (boardData) => {
+  const handleCellClick = (cellId, categoryId) => {
+    console.log(`cellId: ${cellId}.  categoryId: ${categoryId}`);
+    // get the current cell
+    let clickedCellData = cellData.find(x => x.id === cellId);
+    let clickedCell = document.querySelector(`[data-cell-id="${cellId}"]`);
+    let newInfo = clickedCellData.answer;
+
+    clickedCell.innerHTML = newInfo
+
+/*    switch (clickedCellData.currentState) {
+      case "UNCLICKED":
+        changeCellDisplay(clickedCell, newInfo);
+        break;
+      case "QUESTION":
+        break;
+    }*/
+  }
+
+/*  const changeCellDisplay = (cell, newInfo) => {
+    cell.innerHTML = newInfo;
+  }*/
+
+  const initBoard = async (boardData) => {
     let table = document.getElementById('tblJeopardy');
 
     // build header
@@ -94,19 +118,28 @@
       var row = document.createElement('tr');
       for (const rowCell of currentRowData) {
         let col = document.createElement('td');
+
+        // we need to uniquely identify each cell so that when it is clicked, we will
+        // be able to access the information for that cell.
+
+        col.setAttribute('data-cell-id', rowCell.id); // this should be unique
+        col.setAttribute('data-category-id', rowCell.category_id); // we will set the category id as well
+
         // here we are initializing the cell with the question, but we should display a question mark
         // for the initial 'unclicked' state.  the cell data should be stored/available so that
         // subsequent clicks can reveal the appropriate info.
         // there are different ways to accomplish this.
         let cell = document.createTextNode(rowCell.question); // display points value
-        cell.addEventListener('click', () => {
-          // code here
+        col.addEventListener('click', () => {
+          handleCellClick(rowCell.id, rowCell.category_id);
         });
         col.appendChild(cell);
         row.appendChild(col);
       }
       tbody.appendChild(row);
     }
+
+    return rowData;
   }
 
   const fetchCategories = async () => {
